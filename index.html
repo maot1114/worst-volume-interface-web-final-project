@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Catch the Volume — Draft</title>
+  <style>
+    :root {
+      --bg: #0f1020;
+      --panel: #1b1d36;
+      --panel-2: #26294d;
+      --text: #f5f7ff;
+      --muted: #b8bce0;
+      --accent: #ffb703;
+      --danger: #ff5d73;
+      --ok: #89fc8d;
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: Arial, Helvetica, sans-serif;
+      background: radial-gradient(circle at top, #1b1d36 0%, #0f1020 60%);
+      color: var(--text);
+      overflow: hidden;
+    }
+
+    .layout {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 24px;
+      display: grid;
+      grid-template-columns: 320px 1fr;
+      gap: 24px;
+      align-items: start;
+    }
+
+    .panel {
+      background: rgba(27, 29, 54, 0.92);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 20px;
+      box-shadow: 0 18px 45px rgba(0,0,0,0.28);
+      backdrop-filter: blur(8px);
+    }
+
+    .sidebar {
+      padding: 22px;
+      position: relative;
+      z-index: 2;
+    }
+
+    h1 {
+      margin-top: 0;
+      font-size: 1.9rem;
+      line-height: 1.1;
+    }
+
+    .subtitle {
+      color: var(--muted);
+      margin-bottom: 18px;
+      line-height: 1.45;
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin: 18px 0;
+    }
+
+    .stat {
+      background: var(--panel-2);
+      border-radius: 14px;
+      padding: 12px;
+    }
+
+    .label {
+      color: var(--muted);
+      font-size: 0.82rem;
+      margin-bottom: 6px;
+    }
+
+    .value {
+      font-size: 1.4rem;
+      font-weight: bold;
+    }
+
+    .badges {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin: 16px 0 20px;
+    }
+
+    .badge {
+      font-size: 0.78rem;
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.08);
+      color: var(--text);
+      border: 1px solid rgba(255,255,255,0.08);
+    }
+
+    .instructions {
+      color: var(--muted);
+      font-size: 0.95rem;
+      line-height: 1.5;
+      margin-bottom: 18px;
+    }
+
+    .buttons {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    button,
+    input[type="range"] {
+      font: inherit;
+    }
+
+    button {
+      border: none;
+      border-radius: 12px;
+      padding: 11px 16px;
+      cursor: pointer;
+      transition: transform 0.15s ease;
+    }
+
+    button:hover { transform: translateY(-1px); }
+
+    .primary {
+      background: var(--accent);
+      color: #1d1300;
+      font-weight: bold;
+    }
+
+    .secondary {
+      background: rgba(255,255,255,0.1);
+      color: var(--text);
+      border: 1px solid rgba(255,255,255,0.08);
+    }
+
+    .arena {
+      min-height: calc(100vh - 48px);
+      padding: 24px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .arena-inner {
+      position: relative;
+      height: calc(100vh - 48px);
+      min-height: 620px;
+    }
+
+    .hint {
+      position: absolute;
+      top: 18px;
+      right: 24px;
+      background: rgba(255,255,255,0.08);
+      color: var(--muted);
+      padding: 10px 14px;
+      border-radius: 999px;
+      font-size: 0.88rem;
+    }
+
+    .speaker {
+      position: absolute;
+      left: 50%;
+      top: 44%;
+      transform: translate(-50%, -50%);
+      text-align: center;
+      opacity: 0.18;
+      pointer-events: none;
+    }
+
+    .speaker-icon {
+      font-size: 7rem;
+      line-height: 1;
+    }
+
+    .speaker-text {
+      font-size: 1rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .runner {
+      position: absolute;
+      width: 220px;
+      background: linear-gradient(180deg, #ffffff 0%, #eef1ff 100%);
+      color: #101322;
+      border-radius: 20px;
+      padding: 16px;
+      box-shadow: 0 16px 35px rgba(0,0,0,0.3);
+      cursor: pointer;
+      user-select: none;
+      transition: box-shadow 0.2s ease, transform 0.08s ease;
+      z-index: 3;
+    }
+
+    .runner.freezing {
+      box-shadow: 0 0 0 3px rgba(137,252,141,0.45), 0 16px 35px rgba(0,0,0,0.3);
+    }
+
+    .runner-title {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-weight: bold;
+      margin-bottom: 12px;
+    }
+
+    .runner small {
+      color: #556;
+      display: block;
+      margin-top: 6px;
+      line-height: 1.35;
+    }
+
+    .mini-row {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .fake-slider {
+      height: 18px;
+      background: #d9def6;
+      border-radius: 999px;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .fake-fill {
+      height: 100%;
+      width: 50%;
+      background: linear-gradient(90deg, #ff5d73, #ffb703);
+      transition: width 0.18s ease;
+    }
+
+    .tap-btn {
+      background: #101322;
+      color: white;
+      padding: 10px 14px;
+      border-radius: 10px;
+      min-width: 74px;
+      text-align: center;
+      font-weight: bold;
+    }
+
+    .decoy {
+      position: absolute;
+      width: 190px;
+      background: rgba(255,255,255,0.12);
+      border: 1px dashed rgba(255,255,255,0.35);
+      color: white;
+      border-radius: 18px;
+      padding: 14px;
+      opacity: 0.7;
+      z-index: 1;
+    }
+
+    .decoy .fake-slider { background: rgba(255,255,255,0.18); }
+    .decoy .fake-fill { background: rgba(255,255,255,0.3); width: 70%; }
+
+    .status {
+      margin-top: 18px;
+      min-height: 28px;
+      color: var(--muted);
+      line-height: 1.4;
+    }
+
+    .status strong { color: var(--text); }
+
+    .footer-note {
+      margin-top: 18px;
+      font-size: 0.82rem;
+      color: var(--muted);
+    }
+
+    .tiny-meter {
+      margin-top: 12px;
+      height: 10px;
+      background: rgba(255,255,255,0.1);
+      border-radius: 999px;
+      overflow: hidden;
+    }
+
+    .tiny-meter-fill {
+      width: 50%;
+      height: 100%;
+      background: linear-gradient(90deg, #89fc8d, #ffb703, #ff5d73);
+      transition: width 0.15s ease;
+    }
+
+    @media (max-width: 900px) {
+      body { overflow: auto; }
+      .layout {
+        grid-template-columns: 1fr;
+      }
+      .arena {
+        min-height: 720px;
+      }
+      .arena-inner {
+        height: 680px;
+        min-height: 680px;
+      }
+      .hint {
+        position: static;
+        display: inline-block;
+        margin-bottom: 12px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="layout">
+    <aside class="panel sidebar">
+      <h1>Catch the Volume</h1>
+      <p class="subtitle">A deliberately frustrating volume interface draft. It is functional, but the control resists you just enough to stay annoying instead of impossible.</p>
+
+      <div class="stats">
+        <div class="stat">
+          <div class="label">Actual Volume</div>
+          <div class="value" id="volumeLabel">50%</div>
+        </div>
+        <div class="stat">
+          <div class="label">Successful Clicks</div>
+          <div class="value" id="successLabel">0</div>
+        </div>
+      </div>
+
+      <div class="tiny-meter"><div class="tiny-meter-fill" id="meterFill"></div></div>
+
+      <div class="badges">
+        <span class="badge">moves away when approached</span>
+        <span class="badge">rare freeze windows</span>
+        <span class="badge">small volume changes</span>
+        <span class="badge">fake UI decoys</span>
+      </div>
+
+      <div class="instructions">
+        Hover near the real control to make it drift away. Click the <strong>REAL</strong> card when you can. Sometimes it freezes for a second. The gray cards are useless decoys.
+      </div>
+
+      <div class="buttons">
+        <button class="primary" id="toggleAudio">Start Sound</button>
+        <button class="secondary" id="toggleDirection">Mode: Louder</button>
+        <button class="secondary" id="resetBtn">Reset</button>
+      </div>
+
+      <div class="status" id="statusText">The control is nervous but still catchable.</div>
+
+      <div class="footer-note">
+        Draft adjustment based on feedback: the control no longer fully escapes the cursor. It repels within a limited radius, pauses sometimes, and stays inside a bounded play area.
+      </div>
+
+      <audio id="audio" loop>
+        <source src="https://interactive-examples.mdn.mozilla.net/media/cc0-audio/t-rex-roar.mp3" type="audio/mpeg">
+      </audio>
+    </aside>
+
+    <main class="panel arena">
+      <div class="hint">Tip: Wait for a freeze, then click fast.</div>
+      <div class="arena-inner" id="arena">
+        <div class="speaker">
+          <div class="speaker-icon">🔊</div>
+          <div class="speaker-text">volume should be easy</div>
+        </div>
+
+        <div class="decoy" style="top: 90px; left: 110px;">
+          <div class="runner-title">Volume <span>DECOY</span></div>
+          <div class="mini-row">
+            <div class="fake-slider"><div class="fake-fill"></div></div>
+            <div class="tap-btn">+10</div>
+          </div>
+          <small>This one looks helpful, which is exactly why it isn't.</small>
+        </div>
+
+        <div class="decoy" style="bottom: 80px; right: 70px;">
+          <div class="runner-title">Volume <span>ALMOST</span></div>
+          <div class="mini-row">
+            <div class="fake-slider"><div class="fake-fill" style="width: 18%"></div></div>
+            <div class="tap-btn">+10</div>
+          </div>
+          <small>Another fake control to waste just a little time.</small>
+        </div>
+
+        <div class="runner" id="runner" style="top: 210px; left: 390px;">
+          <div class="runner-title">Volume <span style="color:#ff5d73">REAL</span></div>
+          <div class="mini-row">
+            <div class="fake-slider">
+              <div class="fake-fill" id="cardFill"></div>
+            </div>
+            <div class="tap-btn" id="tapBtn">+5</div>
+          </div>
+          <small>It dislikes your cursor but respects the edges of the room.</small>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    const arena = document.getElementById('arena');
+    const runner = document.getElementById('runner');
+    const volumeLabel = document.getElementById('volumeLabel');
+    const successLabel = document.getElementById('successLabel');
+    const statusText = document.getElementById('statusText');
+    const tapBtn = document.getElementById('tapBtn');
+    const cardFill = document.getElementById('cardFill');
+    const meterFill = document.getElementById('meterFill');
+    const toggleAudioBtn = document.getElementById('toggleAudio');
+    const toggleDirectionBtn = document.getElementById('toggleDirection');
+    const resetBtn = document.getElementById('resetBtn');
+    const audio = document.getElementById('audio');
+
+    let volume = 50;
+    let successClicks = 0;
+    let mode = 'up';
+    let frozenUntil = 0;
+    let lastMove = 0;
+
+    function clamp(num, min, max) {
+      return Math.min(Math.max(num, min), max);
+    }
+
+    function updateUI(message = '') {
+      volumeLabel.textContent = `${volume}%`;
+      successLabel.textContent = successClicks;
+      cardFill.style.width = `${volume}%`;
+      meterFill.style.width = `${volume}%`;
+      tapBtn.textContent = mode === 'up' ? '+5' : '-5';
+      audio.volume = volume / 100;
+      if (message) statusText.innerHTML = message;
+    }
+
+    function getRunnerPosition() {
+      return {
+        x: parseFloat(runner.style.left),
+        y: parseFloat(runner.style.top)
+      };
+    }
+
+    function setRunnerPosition(x, y) {
+      const maxX = arena.clientWidth - runner.offsetWidth;
+      const maxY = arena.clientHeight - runner.offsetHeight;
+      runner.style.left = `${clamp(x, 0, maxX)}px`;
+      runner.style.top = `${clamp(y, 0, maxY)}px`;
+    }
+
+    function maybeFreeze() {
+      const now = Date.now();
+      if (now < frozenUntil) return true;
+      if (Math.random() < 0.015) {
+        frozenUntil = now + 1000;
+        runner.classList.add('freezing');
+        statusText.innerHTML = '<strong>Freeze window!</strong> The control hesitated for one second.';
+        setTimeout(() => runner.classList.remove('freezing'), 1000);
+        return true;
+      }
+      return false;
+    }
+
+    arena.addEventListener('mousemove', (e) => {
+      const now = Date.now();
+      if (now - lastMove < 16) return;
+      lastMove = now;
+
+      if (now < frozenUntil) return;
+      if (maybeFreeze()) return;
+
+      const arenaRect = arena.getBoundingClientRect();
+      const runnerRect = runner.getBoundingClientRect();
+      const runnerCenterX = runnerRect.left - arenaRect.left + runnerRect.width / 2;
+      const runnerCenterY = runnerRect.top - arenaRect.top + runnerRect.height / 2;
+      const dx = e.clientX - arenaRect.left - runnerCenterX;
+      const dy = e.clientY - arenaRect.top - runnerCenterY;
+      const distance = Math.hypot(dx, dy);
+
+      const repelRadius = 170;
+      const safeRadius = 55;
+      if (distance < repelRadius && distance > safeRadius) {
+        const strength = (repelRadius - distance) / repelRadius;
+        const step = 18 + strength * 22;
+        const moveX = (-dx / distance) * step;
+        const moveY = (-dy / distance) * step;
+        const { x, y } = getRunnerPosition();
+        setRunnerPosition(x + moveX, y + moveY);
+        statusText.textContent = 'The control noticed you and slid away.';
+      }
+    });
+
+    runner.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const now = Date.now();
+      if (now < frozenUntil || Math.random() < 0.72) {
+        successClicks += 1;
+        volume = clamp(volume + (mode === 'up' ? 5 : -5), 0, 100);
+        updateUI('<strong>Success.</strong> You actually caught it. Volume changed by only 5%.');
+        if (Math.random() < 0.35) {
+          mode = mode === 'up' ? 'down' : 'up';
+          toggleDirectionBtn.textContent = `Mode: ${mode === 'up' ? 'Louder' : 'Quieter'}`;
+          statusText.innerHTML += ' It also changed modes for no good reason.';
+        }
+      } else {
+        const { x, y } = getRunnerPosition();
+        setRunnerPosition(x + (Math.random() * 120 - 60), y + (Math.random() * 120 - 60));
+        updateUI('Almost. It jumped at the last second.');
+      }
+    });
+
+    toggleDirectionBtn.addEventListener('click', () => {
+      mode = mode === 'up' ? 'down' : 'up';
+      toggleDirectionBtn.textContent = `Mode: ${mode === 'up' ? 'Louder' : 'Quieter'}`;
+      updateUI(`Manual mode change: the real card now changes volume ${mode === 'up' ? 'up' : 'down'}.`);
+    });
+
+    resetBtn.addEventListener('click', () => {
+      volume = 50;
+      successClicks = 0;
+      mode = 'up';
+      frozenUntil = 0;
+      toggleDirectionBtn.textContent = 'Mode: Louder';
+      setRunnerPosition(390, 210);
+      runner.classList.remove('freezing');
+      updateUI('Reset complete. The interface has learned nothing.');
+    });
+
+    toggleAudioBtn.addEventListener('click', async () => {
+      if (audio.paused) {
+        try {
+          await audio.play();
+          audio.volume = volume / 100;
+          toggleAudioBtn.textContent = 'Pause Sound';
+          updateUI('Audio started. Now the volume changes matter.');
+        } catch (err) {
+          updateUI('Your browser blocked autoplay. Click again to start sound.');
+        }
+      } else {
+        audio.pause();
+        toggleAudioBtn.textContent = 'Start Sound';
+        updateUI('Audio paused. The interface remains annoying anyway.');
+      }
+    });
+
+    window.addEventListener('resize', () => {
+      const { x, y } = getRunnerPosition();
+      setRunnerPosition(x, y);
+    });
+
+    updateUI();
+  </script>
+</body>
+</html>
