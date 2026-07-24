@@ -6,14 +6,74 @@
   <title>Catch the Volume</title>
   <link rel="stylesheet" href="style.css">
 </head>
+
 <body>
+  <main class="app">
 
-  <h1>Catch the Volume</h1>
-  <p>Try to click the button to change the volume 😈</p>
+    <section class="intro" id="intro">
+      <p class="eyebrow">A deliberately terrible interface</p>
 
-  <div id="volumeDisplay">Volume: 50%</div>
+      <h1>Catch the Volume</h1>
 
-  <button id="volumeBtn">+5</button>
+      <p class="instructions">
+        Catch the <strong>+5</strong> button to raise the volume.
+        When you are finally satisfied, try to submit it.
+      </p>
+    </section>
+
+    <section class="volume-panel" aria-live="polite">
+      <div class="volume-readout">
+        <span>Current volume</span>
+        <strong id="volumeDisplay">50%</strong>
+      </div>
+
+      <div class="meter" aria-hidden="true">
+        <div class="meter-fill" id="meterFill"></div>
+      </div>
+
+      <p class="status" id="statusMessage">
+        The button is already suspicious of you.
+      </p>
+    </section>
+
+    <section
+      class="play-area"
+      id="playArea"
+      aria-label="Moving volume control area"
+    >
+      <button
+        id="volumeBtn"
+        type="button"
+        aria-label="Increase volume by five percent"
+      >
+        +5
+      </button>
+    </section>
+
+    <section class="controls">
+      <button id="submitBtn" class="submit-button" type="button">
+        Set This Volume
+      </button>
+
+      <p class="attempt-counter">
+        Escape attempts:
+        <span id="escapeCount">0</span>
+      </p>
+    </section>
+
+    <section class="result-card" id="resultCard" hidden>
+      <p class="eyebrow">Interaction complete</p>
+
+      <h2>Volume successfully set.</h2>
+
+      <p id="finalResult"></p>
+
+      <button id="restartBtn" class="restart-button" type="button">
+        Suffer Again
+      </button>
+    </section>
+
+  </main>
 
   <script src="script.js"></script>
 </body>
